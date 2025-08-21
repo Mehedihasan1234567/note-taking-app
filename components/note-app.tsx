@@ -5,10 +5,13 @@ import { useTheme } from "next-themes";
 import { NoteSidebar } from "@/components/note-sidebar";
 import { NoteEditor } from "@/components/note-editor";
 import { EmptyState } from "@/components/empty-state";
-import type { Note } from "@/lib/types";
-import { fetchNotes, createNote, updateNote, deleteNote } from "@/lib/api";
+import { LoginForm } from "@/components/login-form";
+import type { Note, User } from "@/lib/types";
+import { fetchNotes, createNote, updateNote, deleteNote, getCurrentUser, logout } from "@/lib/api";
 
 export function NoteApp() {
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
@@ -17,9 +20,26 @@ export function NoteApp() {
   const { theme, setTheme } = useTheme();
 
   useEffect(() => {
-    loadNotes();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      loadNotes();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  async function checkAuth() {
+    setIsAuthLoading(true);
+    try {
+      const { user } = await getCurrentUser();
+      setUser(user);
+    } catch (err) {
+      setUser(null);
+    }
+    setIsAuthLoading(false);
+  }
 
   async function loadNotes() {
     setIsLoading(true);
@@ -77,6 +97,33 @@ export function NoteApp() {
     }
   };
 
+  const handleLogin = (loggedInUser: User) => {
+    setUser(loggedInUser);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setUser(null);
+      setNotes([]);
+      setSelectedNote(null);
+    } catch (err: any) {
+      setError(err.message);
+    }
+  };
+
+  if (isAuthLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center bg-slate-50 dark:bg-slate-900">
+        <div className="text-slate-600 dark:text-slate-400">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginForm onLogin={handleLogin} />;
+  }
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100">
       <NoteSidebar
@@ -86,6 +133,8 @@ export function NoteApp() {
         toggleSidebar={toggleSidebar}
         onSelectNote={setSelectedNote}
         onCreateNote={createNewNote}
+        onLogout={handleLogout}
+        user={user}
         isLoading={isLoading}
       />
       <div className="flex flex-1 flex-col overflow-hidden">

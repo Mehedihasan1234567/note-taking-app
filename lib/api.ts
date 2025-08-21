@@ -1,4 +1,4 @@
-import type { Note } from "@/lib/types";
+import type { Note, User } from "@/lib/types";
 
 export async function fetchNotes() {
   const res = await fetch("/api/notes");
@@ -39,4 +39,30 @@ export async function deleteNote(id: string) {
     return;
   }
   if (!res.ok && res.status !== 204) throw new Error("Failed to delete note");
+}
+
+// Auth functions
+export async function login(email: string, name?: string) {
+  const res = await fetch("/api/auth", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, name }),
+  });
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({ error: "Login failed" }));
+    throw new Error(errorData.error || "Login failed");
+  }
+  return res.json() as Promise<{ user: User }>;
+}
+
+export async function getCurrentUser() {
+  const res = await fetch("/api/auth");
+  if (!res.ok) throw new Error("Failed to get current user");
+  return res.json() as Promise<{ user: User | null }>;
+}
+
+export async function logout() {
+  const res = await fetch("/api/auth", { method: "DELETE" });
+  if (!res.ok) throw new Error("Logout failed");
+  return res.json();
 }

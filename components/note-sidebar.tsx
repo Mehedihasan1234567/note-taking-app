@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Search, Plus, Menu } from "lucide-react"
+import { Search, Plus, Menu, LogOut, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { NoteCard } from "@/components/note-card"
 import { NoteSkeleton } from "@/components/note-skeleton"
-import type { Note } from "@/lib/types"
+import type { Note, User as UserType } from "@/lib/types"
 
 interface NoteSidebarProps {
   notes: Note[]
@@ -15,6 +15,8 @@ interface NoteSidebarProps {
   toggleSidebar: () => void
   onSelectNote: (note: Note) => void
   onCreateNote: () => void
+  onLogout: () => void
+  user: UserType
   isLoading: boolean
 }
 
@@ -25,6 +27,8 @@ export function NoteSidebar({
   toggleSidebar,
   onSelectNote,
   onCreateNote,
+  onLogout,
+  user,
   isLoading,
 }: NoteSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("")
@@ -47,12 +51,23 @@ export function NoteSidebar({
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <div className="flex items-center justify-between border-b border-slate-200 p-4 dark:border-slate-700">
-          <h1 className="text-xl font-bold">Notes</h1>
-          <Button variant="ghost" size="icon" onClick={toggleSidebar} className="md:hidden">
-            <Menu className="h-5 w-5" />
-            <span className="sr-only">Toggle sidebar</span>
-          </Button>
+        <div className="border-b border-slate-200 p-4 dark:border-slate-700">
+          <div className="flex items-center justify-between mb-3">
+            <h1 className="text-xl font-bold">Notes</h1>
+            <Button variant="ghost" size="icon" onClick={toggleSidebar} className="md:hidden">
+              <Menu className="h-5 w-5" />
+              <span className="sr-only">Toggle sidebar</span>
+            </Button>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400">
+              <User className="h-4 w-4" />
+              <span className="truncate">{user.name || user.email}</span>
+            </div>
+            <Button variant="ghost" size="sm" onClick={onLogout} className="h-8 px-2">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
 
         <div className="relative p-4">
